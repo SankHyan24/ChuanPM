@@ -183,7 +183,6 @@ void handleHit(const HitInfo hit, inout RayData rayData)
 
     BSDFSample bsdfSample;
     bool canGenerateNewRay = generateNewRay(sd, mi, isCurveHit, rayOrigin, bsdfSample, rayData);
-    // ???????????????????? 总是返回false
     if (!canGenerateNewRay)
     {
         // gVBufferSC.writeShit(launchIndex, uint3(0, 0, 255));

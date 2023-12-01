@@ -47,7 +47,7 @@ public:
     virtual void compile(RenderContext* pRenderContext, const CompileData& compileData) override {}
     virtual void execute(RenderContext* pRenderContext, const RenderData& renderData) override;
     virtual void renderUI(Gui::Widgets& widget) override;
-    virtual void setScene(RenderContext* pRenderContext, const ref<Scene>& pScene) override {}
+    virtual void setScene(RenderContext* pRenderContext, const ref<Scene>& pScene) override;
     virtual bool onMouseEvent(const MouseEvent& mouseEvent) override { return false; }
     virtual bool onKeyEvent(const KeyboardEvent& keyEvent) override { return false; }
 
@@ -75,6 +75,56 @@ private:
     /** Writes the output times to file in mTimesOutputFilePath
      */
     void outputTimes();
+    // setScene call
+    /** Resets buffer and runtime vars. Used for scene change or number of photons change
+     */
+    void resetPhotonMapper();
+    /** Creates the photon counter for caustic and global photon buffers
+     */
+    void preparePhotonCounters();
+    // execute call
+    /** Copies the photon counter to a cpu buffer
+     */
+    void copyPhotonCounter(RenderContext* pRenderContext);
+    /** Applies the changes to the number of photons
+     */
+    void changeNumPhotons();
+    /** Prepares the info textures. Is called inside of preparePhotonBuffers. Can be called seperate for format changes
+     */
+    void preparePhotonInfoTexture();
+    /** Prepares the hash buffers
+     */
+    void prepareHashBuffer();
+
+    /** Prepares all buffers neede for the generate photon pass
+     */
+    bool preparePhotonBuffers();
+
+    /** Prepares the buffer that holds the seeds for the SampleGenerator
+     */
+    void prepareRandomSeedBuffer(const uint2 screenDimensions);
+
+    /** Prepares a light sample texture for the photon generate pass
+     */
+    void createLightSampleTexture(RenderContext* pRenderContext);
+    /** Gets the active emissive triangles from the light collection.
+     *  This is analogous to the function from LightCollection. It is here to prevent changes to the core of Falcor.
+     *  As this is done once it has no impact on performance and only a minimal impact on CPU-Memory
+     */
+    void getActiveEmissiveTriangles(RenderContext* pRenderContext);
+
+    /** Creates the Generate Photon pass, where the photons are shot through the scene and saved in an AABB and information buffer
+     */
+    void generatePhotons(RenderContext* pRenderContext, const RenderData& renderData);
+
+    /** Pass that collect the photons. It will shoot a infinit small ray at the current camera position and collect all photons.
+     * The needed position etc. has to be provided by a gBuffer
+     */
+    void collectPhotons(RenderContext* pRenderContext, const RenderData& renderData);
+
+    /** Prepares Program Variables and binds the sample generator
+     */
+    void prepareVars();
 
     // All from HashPPM
     // Internal state

@@ -5,6 +5,7 @@ target_sources(RTPM PRIVATE
     RTPM.h
     PMCollect.cs.slang
     PMGenerate.rt.slang
+    PMHashFunction.slang
 )
 
 target_copy_shaders(RTPM RenderPasses/RTPM)
