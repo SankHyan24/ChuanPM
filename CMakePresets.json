@@ -11,7 +11,7 @@
             "description": "Base configuration inherited by all presets.",
             "hidden": true,
             "cacheVariables": {},
-            "cmakeExecutable": "${sourceDir}/tools/.packman/cmake/bin/cmake",
+            "cmakeExecutable": "${sourceDir}/tools/.packman/cmake/bin/cmake.exe",
             "binaryDir": "${sourceDir}/build/${presetName}"
         },
         {
