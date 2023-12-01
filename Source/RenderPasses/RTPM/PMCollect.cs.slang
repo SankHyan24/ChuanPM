@@ -135,7 +135,7 @@ float3 photonContribution(in ShadingData sd, in const IMaterialInstance mi, uint
     if (!hitSphere(photonPos, radius, sd.posW))
         return float3(0);
 
-    float3 f_r = mi.eval(sd, -photon.dir.xyz, sg); // 这个wi待定
+    float3 f_r = mi.eval(sd, -photon.dir.xyz, sg);
 
     return f_r * photon.flux.xyz;
 }

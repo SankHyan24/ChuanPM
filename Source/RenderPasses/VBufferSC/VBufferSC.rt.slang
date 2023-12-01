@@ -65,7 +65,7 @@ struct RayData
      */
     __init(SampleGenerator sg)
     {
-        this.thp = float3(1.0);
+        this.thp = float3(1.0, 1.0, 1.0);
         this.terminated = false;
         this.origin = float3(0);
         this.distance = 0.f;

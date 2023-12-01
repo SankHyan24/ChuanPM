@@ -79,8 +79,8 @@ const ChannelList kVBufferExtraChannels = {
     { "viewW",          "gViewW",           "View direction in world space",    true /* optional */, ResourceFormat::RGBA32Float }, // TODO: Switch to packed 2x16-bit snorm format.
     { "time",           "gTime",            "Per-pixel execution time",         true /* optional */, ResourceFormat::R32Uint     },
     { "mask",           "gMask",            "Mask",                             true /* optional */, ResourceFormat::R32Float    },
-    { "throughput",     "gThp",             "Throughput for transparent materials", true /* optional */, ResourceFormat::R32Float    },
-    { "emissive",       "gEmissive",        "Emissive color",                   true /* optional */, ResourceFormat::R32Float    },
+    { "throughput",     "gThp",             "Throughput for transparent materials", true /* optional */, ResourceFormat::RGBA32Float    },
+    { "emissive",       "gEmissive",        "Emissive color",                   true /* optional */, ResourceFormat::RGBA32Float    },
     // clang-format on
 };
 }; // namespace
