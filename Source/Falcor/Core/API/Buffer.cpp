@@ -273,10 +273,10 @@ void Buffer::setBlob(const void* pData, size_t offset, size_t size)
     {
         mpDevice->getRenderContext()->updateBuffer(this, pData, offset, size);
     }
-    else if (mMemoryType == MemoryType::ReadBack)
-    {
-        FALCOR_THROW("Cannot set data to a buffer that was created with MemoryType::ReadBack.");
-    }
+    // else if (mMemoryType == MemoryType::ReadBack)
+    // {
+    //     FALCOR_THROW("Cannot set data to a buffer that was created with MemoryType::ReadBack.");
+    // }
 }
 
 void Buffer::getBlob(void* pData, size_t offset, size_t size) const
