@@ -380,7 +380,5 @@ void rayGen()
         }
     }
 
-    gVBufferSC.writeAux(launchIndex, camRay);
-
     gVBufferSC.endTime(launchIndex, timer);
 }

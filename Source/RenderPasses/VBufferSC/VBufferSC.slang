@@ -76,6 +76,7 @@ struct VBufferSC
         gVBuffer[pixel] = hit.getData();
         gThp[pixel] = float4(throughPut, 1.f);
         gEmissive[pixel] = float4(emissive, 1.f);
+        gViewW[pixel] = float4(-rayDir, 1.f);
 
         VertexData v;
         float depth = 1.f;
@@ -135,6 +136,7 @@ struct VBufferSC
     void writeMiss(uint2 pixel, float3 rayOrigin, float3 rayDir)
     {
         gVBuffer[pixel] = {};
+        gViewW[pixel] = {};
 
         if (is_valid(gDepth))
             gDepth[pixel] = 1.f;
