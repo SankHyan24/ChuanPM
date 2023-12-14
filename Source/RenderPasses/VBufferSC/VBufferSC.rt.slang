@@ -156,12 +156,14 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     let lod = ExplicitLodTextureSampler(0.f);
 
     // load shading data
-    ShadingData sd = loadShadingData(hit, rayData.origin, rayData.direction, lod);
+    ShadingData sd = loadShadingData(hit, rayData.origin, normalize(rayData.direction), lod);
     // not implement adjust shading normal yet
 
     // create material instance
-    IMaterialInstance mi = gScene.materials.getMaterialInstance(sd, lod);
-
+    bool isPrimaryHit = rayData.pathLength == 0;
+    let hints = getMaterialInstanceHints(hit, isPrimaryHit);
+    const IMaterialInstance mi = gScene.materials.getMaterialInstance(sd, lod, hints);
+    // const IMaterialInstance mi = gScene.materials.getMaterialInstance(sd, lod);
     // emission
     float3 throughPut = rayData.thp;
     float3 emissiveRadiance = throughPut * mi.getProperties(sd).emission;
@@ -178,25 +180,26 @@ void handleHit(const HitInfo hit, inout RayData rayData)
         rayOrigin = sd.computeRayOrigin();
     }
 
-    //
-    rayData.distance += distance(ObjectRayOrigin(), sd.posW); // accumulate ray distance
+    rayData.distance = distance(ObjectRayOrigin(), sd.posW); // accumulate ray distance // SC:Refine
+    // rayData.distance += distance(ObjectRayOrigin(), sd.posW); // accumulate ray distance
 
     BSDFSample bsdfSample;
     bool canGenerateNewRay = generateNewRay(sd, mi, isCurveHit, rayOrigin, bsdfSample, rayData);
     if (!canGenerateNewRay)
     {
-        // gVBufferSC.writeShit(launchIndex, uint3(0, 0, 255));
         rayData.terminated = true;
         // rayData.distance = -1.f;
-        gVBufferSC.writeMiss(launchIndex, WorldRayOrigin(), WorldRayDirection());
+        gVBufferSC.writeMiss(launchIndex);
         return;
     }
 
     // if diffuse, if so, write hit and terminate
     BSDFProperties bsdfProperties = mi.getProperties(sd);
-    // bool ifDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
-    bool ifDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
-    if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && ifDiffuse))) // sc: 没看明白
+    // bool isDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
+    bool isDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
+    if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)) &&
+        (!rayData.terminated || isDiffuse))
+    // if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && ifDiffuse))) // sc: 没看明白
     {
         gVBufferSC.writeHit(launchIndex, WorldRayOrigin(), WorldRayDirection(), throughPut, emissiveRadiance, hit, rayData.distance);
         rayData.terminated = true;
@@ -214,7 +217,7 @@ void miss(inout RayData rayData)
     // Write invalid hit to output buffer.
     uint2 launchIndex = DispatchRaysIndex().xy;
     rayData.terminated = true;
-    gVBufferSC.writeMiss(launchIndex, WorldRayOrigin(), WorldRayDirection());
+    gVBufferSC.writeMiss(launchIndex);
 }
 
 //
@@ -357,6 +360,9 @@ void rayGen()
     Ray ray = camRay;
     rayData.origin = ray.origin;
     rayData.direction = ray.dir;
+    RayDesc raydesc = ray.toRayDesc();
+    raydesc.TMax = camRay.tMax;
+    raydesc.TMin = camRay.tMin;
     for (uint i = 0; i < gMaxRecursion; i++)
     {
         TraceRay(
@@ -366,17 +372,19 @@ void rayGen()
             0 /* hitIdx */,
             rayTypeCount,
             0 /* missIdx */,
-            ray.toRayDesc(),
+            raydesc,
             rayData
         );
         if (rayData.terminated)
+        {
             break;
+        }
         // update ray for next iteration
-        ray.origin = rayData.origin;
-        ray.dir = rayData.direction;
+        raydesc.Direction = rayData.direction;
+        raydesc.Origin = rayData.origin;
         if (i == 0)
         {
-            ray.tMin = 0.0; // Change tMin for transparent hits
+            raydesc.TMin = 0.0; // Change tMin for transparent hits
         }
     }
 

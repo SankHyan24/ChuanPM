@@ -129,17 +129,20 @@ struct VBufferSC
             gMotionVector[pixel] = motionVector;
         if (is_valid(gMask))
             gMask[pixel] = 1.0f;
+
+        if (is_valid(gDepth))
+            gDepth[pixel] = linZ;
     }
 
     void writeShit(uint2 pixel, uint3 color) { gVBuffer[pixel] = uint4(color, 255); }
 
-    void writeMiss(uint2 pixel, float3 rayOrigin, float3 rayDir)
+    void writeMiss(uint2 pixel)
     {
         gVBuffer[pixel] = {};
         gViewW[pixel] = {};
 
         if (is_valid(gDepth))
-            gDepth[pixel] = 1.f;
+            gDepth[pixel] = 0.0f;
         if (is_valid(gMotionVector))
             gMotionVector[pixel] = {};
         if (is_valid(gMask))
@@ -165,3 +168,23 @@ struct VBufferSC
             gTime[pixel] = timer.getElapsed();
     }
 };
+
+uint getMaterialInstanceHints(const HitInfo hit, const bool isPrimary)
+{
+    uint hints = 0;
+    if (hit.getType() == HitType::Triangle || hit.getType() == HitType::DisplacedTriangle)
+    {
+        if (isPrimary)
+            hints |= (uint)MaterialInstanceHints::AdjustShadingNormal;
+        // #if GBUFFER_ADJUST_SHADING_NORMALS
+        //         if (kAdjustShadingNormals || isPrimary)
+        //             hints |= (uint)MaterialInstanceHints::AdjustShadingNormal;
+        // #else
+        //         if (kAdjustShadingNormals && !isPrimary)
+        //             hints |= (uint)MaterialInstanceHints::AdjustShadingNormal;
+        // #endif
+    }
+    hints |= (uint)MaterialInstanceHints::AdjustShadingNormal;
+
+    return hints;
+}
