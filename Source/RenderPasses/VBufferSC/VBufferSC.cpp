@@ -263,7 +263,7 @@ void VBufferSC::renderUI(Gui::Widgets& widget)
         "Disable it to force the use of a pinhole camera.",
         true
     );
-    if (widget.var("Specular Roughness Cutoff", mSpecRoughCutoff, 0.0f, 1.0f))
+    if (widget.var("Specular Roughness Cutoff", mSpecRoughCutoff, 0.0f, 0.1f, 1.0f))
         requestRecompile();
     if (widget.var("path trace max depth", mRecursionDepth, 1u, 30u))
         requestRecompile();

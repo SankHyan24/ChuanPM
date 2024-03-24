@@ -374,7 +374,6 @@ void rayGen()
     raydesc.TMax = camRay.tMax;
     raydesc.TMin = camRay.tMin;
     for (uint i = 0; i < gMaxRecursion; i++)
-    // for (uint i = 0; i < 1; i++)
     {
         TraceRay(
             gScene.rtAccel,

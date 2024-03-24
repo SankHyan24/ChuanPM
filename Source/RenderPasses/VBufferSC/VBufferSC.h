@@ -151,7 +151,7 @@ private:
     ref<ComputePass> mpComputePass;
 
     // My defines Configuration
-    float mSpecRoughCutoff = 0.5f; ///< Cutoff for when all hits are counted diffuse.
+    float mSpecRoughCutoff = 0.1f; ///< Cutoff for when all hits are counted diffuse.
     uint mRecursionDepth = 10;
 };
 
