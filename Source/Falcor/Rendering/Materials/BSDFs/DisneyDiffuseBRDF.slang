@@ -49,6 +49,15 @@ struct DisneyDiffuseBRDF : IBSDF, IDifferentiable
         return evalWeight(wi, wo) * M_1_PI * wo.z;
     }
 
+    [Differentiable]
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        if (min(wi.z, wo.z) < kMinCosTheta)
+            return float3(0.f);
+
+        return evalWeight(wi, wo) * M_1_PI;
+    }
+
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         wo = sample_cosine_hemisphere_concentric(sampleNext2D(sg), pdf);

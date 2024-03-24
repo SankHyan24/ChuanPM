@@ -96,6 +96,21 @@ struct SheenBSDF : IBSDF
         return Fr;
     }
 
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        if (min(wi.z, wo.z) < kMinCosTheta)
+            return float3(0.f);
+
+        float3 wh = normalize(wi + wo);
+        float NdotH = wh.z;
+
+        const float3 D = SheenD(NdotH);
+
+        float3 Fr = D * G(wo.z, wi.z) * color * M_PI;
+
+        return Fr;
+    }
+
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         // Default initialization to avoid divergence at returns.

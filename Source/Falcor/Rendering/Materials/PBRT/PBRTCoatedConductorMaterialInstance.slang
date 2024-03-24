@@ -33,7 +33,7 @@ import Rendering.Materials.PBRT.PBRTDielectricMaterialInstance;
 
 struct PBRTCoatedConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
 {
-    ShadingFrame sf;            ///< Shading frame in world space.
+    ShadingFrame sf; ///< Shading frame in world space.
     AnisotropicGGX interfaceD;
     AnisotropicGGX conductorD;
     float interfaceEta;
@@ -46,12 +46,27 @@ struct PBRTCoatedConductorMaterialInstance : MaterialInstanceBase, IMaterialInst
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return float3(0.f);
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
 
-        PBRTDielectricBSDF top = {interfaceD, interfaceEta};
-        PBRTConductorBSDF bottom = {conductorD, conductorEta, conductorK};
+        PBRTDielectricBSDF top = { interfaceD, interfaceEta };
+        PBRTConductorBSDF bottom = { conductorD, conductorEta, conductorK };
 
         return LayeredBSDF(top, bottom).eval(wiLocal, woLocal, sg);
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
+    {
+        float3 wiLocal = sf.toLocal(sd.V);
+        float3 woLocal = sf.toLocal(wo);
+
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
+
+        PBRTDielectricBSDF top = { interfaceD, interfaceEta };
+        PBRTConductorBSDF bottom = { conductorD, conductorEta, conductorK };
+
+        return LayeredBSDF(top, bottom).eval_noncosine(wiLocal, woLocal, sg);
     }
 
     [Differentiable]
@@ -65,13 +80,14 @@ struct PBRTCoatedConductorMaterialInstance : MaterialInstanceBase, IMaterialInst
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = {};
 
-        PBRTDielectricBSDF top = {interfaceD, interfaceEta};
-        PBRTConductorBSDF bottom = {conductorD, conductorEta, conductorK};
+        PBRTDielectricBSDF top = { interfaceD, interfaceEta };
+        PBRTConductorBSDF bottom = { conductorD, conductorEta, conductorK };
 
         bool valid = LayeredBSDF(top, bottom).sample(wiLocal, woLocal, result.pdf, result.weight, result.lobeType, sg);
         result.wo = sf.fromLocal(woLocal);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, result.wo) || result.pdf == 0.f) return false;
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, result.wo) || result.pdf == 0.f)
+            return false;
 
         return valid;
     }
@@ -81,10 +97,11 @@ struct PBRTCoatedConductorMaterialInstance : MaterialInstanceBase, IMaterialInst
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return 0.f;
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return 0.f;
 
-        PBRTDielectricBSDF top = {interfaceD, interfaceEta};
-        PBRTConductorBSDF bottom = {conductorD, conductorEta, conductorK};
+        PBRTDielectricBSDF top = { interfaceD, interfaceEta };
+        PBRTConductorBSDF bottom = { conductorD, conductorEta, conductorK };
 
         return LayeredBSDF(top, bottom).evalPdf(wiLocal, woLocal);
     }
@@ -102,8 +119,7 @@ struct PBRTCoatedConductorMaterialInstance : MaterialInstanceBase, IMaterialInst
 
     uint getLobeTypes(const ShadingData sd)
     {
-        return (uint)(interfaceD.isSingular() ? LobeType::DeltaReflection : LobeType::SpecularReflection)
-             | (uint)(conductorD.isSingular() ? LobeType::DeltaReflection : LobeType::SpecularReflection);
+        return (uint)(interfaceD.isSingular() ? LobeType::DeltaReflection : LobeType::SpecularReflection) |
+               (uint)(conductorD.isSingular() ? LobeType::DeltaReflection : LobeType::SpecularReflection);
     }
-
 };

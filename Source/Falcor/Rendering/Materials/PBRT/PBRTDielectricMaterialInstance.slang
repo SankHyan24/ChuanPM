@@ -37,7 +37,8 @@ struct PBRTDielectricBSDF : IBSDF
 
     float3 eval<S : ISampleGenerator>(const float3 wiLocal, const float3 woLocal, inout S sg)
     {
-        if (D.isSingular() || eta == 1.0f || wiLocal.z * woLocal.z == 0) return float3(0.0f);
+        if (D.isSingular() || eta == 1.0f || wiLocal.z * woLocal.z == 0)
+            return float3(0.0f);
 
         bool reflect = wiLocal.z * woLocal.z > 0.0f;
         float relEta = 1.0 / eta;
@@ -45,11 +46,19 @@ struct PBRTDielectricBSDF : IBSDF
         h *= sign(h.z);
         float wiDotH = dot(wiLocal, h);
         float woDotH = dot(woLocal, h);
-        if (wiDotH * wiLocal.z < 0.0f || woDotH * woLocal.z < 0.0f) return float3(0.0f);
+        if (wiDotH * wiLocal.z < 0.0f || woDotH * woLocal.z < 0.0f)
+            return float3(0.0f);
         float F = evalFresnelDielectric(eta, abs(wiDotH));
 
         return reflect ? D.G2(woLocal, wiLocal) * D.evalNDF(h) * F / (4.0f * abs(wiLocal.z))
-                       : D.G2(woLocal, wiLocal) * D.evalNDF(h) * (1.0f - F) * abs(wiDotH * woDotH / (sqr(woDotH + wiDotH / relEta) * abs(wiLocal.z)));
+                       : D.G2(woLocal, wiLocal) * D.evalNDF(h) * (1.0f - F) *
+                             abs(wiDotH * woDotH / (sqr(woDotH + wiDotH / relEta) * abs(wiLocal.z)));
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wiLocal, const float3 woLocal, inout S sg)
+    {
+        // not implemented
+        return eval(wiLocal, woLocal, sg);
     }
 
     bool sample<S : ISampleGenerator>(float3 wiLocal, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
@@ -89,21 +98,23 @@ struct PBRTDielectricBSDF : IBSDF
             if (sampleNext1D(sg) < F)
             {
                 float3 woLocal = reflect(-wiLocal, h);
-                if (wiLocal.z * woLocal.z < 0.0f) return false;
+                if (wiLocal.z * woLocal.z < 0.0f)
+                    return false;
 
                 wo = woLocal;
-                weight = D.G2(woLocal, wiLocal)/D.G1(wiLocal);
+                weight = D.G2(woLocal, wiLocal) / D.G1(wiLocal);
                 lobeType = (uint)LobeType::SpecularReflection;
                 pdf = F * D.evalPDF(wiLocal, h) / (4.0f * abs(wiDotH));
             }
             else
             {
-                float3 woLocal = refract(-wiLocal, sign(wiLocal.z) * h, 1.0f/relEta);
+                float3 woLocal = refract(-wiLocal, sign(wiLocal.z) * h, 1.0f / relEta);
                 float woDotH = dot(h, woLocal);
-                if (wiLocal.z * woLocal.z > 0.0f) return false;
+                if (wiLocal.z * woLocal.z > 0.0f)
+                    return false;
 
                 wo = woLocal;
-                weight = D.G2(woLocal, wiLocal)/D.G1(wiLocal);
+                weight = D.G2(woLocal, wiLocal) / D.G1(wiLocal);
                 lobeType = (uint)LobeType::SpecularTransmission;
                 pdf = (1.0f - F) * D.evalPDF(wiLocal, h) * abs(woDotH) / sqr(woDotH + wiDotH / relEta);
             }
@@ -113,7 +124,8 @@ struct PBRTDielectricBSDF : IBSDF
 
     float evalPdf(const float3 wiLocal, const float3 woLocal)
     {
-        if (D.isSingular() || eta == 1.0f || wiLocal.z * woLocal.z == 0) return 0.0f;
+        if (D.isSingular() || eta == 1.0f || wiLocal.z * woLocal.z == 0)
+            return 0.0f;
 
         bool reflect = wiLocal.z * woLocal.z > 0.0f;
         float relEta = (1.0f / eta);
@@ -121,7 +133,8 @@ struct PBRTDielectricBSDF : IBSDF
         h *= sign(h.z);
         float wiDotH = dot(wiLocal, h);
         float woDotH = dot(woLocal, h);
-        if (wiDotH * wiLocal.z < 0.0f || woDotH * woLocal.z < 0.0f) return 0.0f;
+        if (wiDotH * wiLocal.z < 0.0f || woDotH * woLocal.z < 0.0f)
+            return 0.0f;
         float F = evalFresnelDielectric(eta, abs(wiDotH));
 
         return reflect ? F * D.evalPDF(wiLocal, h) / (4.0f * abs(wiDotH))
@@ -148,7 +161,7 @@ struct PBRTDielectricBSDF : IBSDF
 */
 struct PBRTDielectricMaterialInstance : MaterialInstanceBase, IMaterialInstance
 {
-    ShadingFrame sf;            ///< Shading frame in world space.
+    ShadingFrame sf; ///< Shading frame in world space.
     PBRTDielectricBSDF bsdf;
 
     float3 eval<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
@@ -156,9 +169,21 @@ struct PBRTDielectricMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, wo, true)) return float3(0.f);
+        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, wo, true))
+            return float3(0.f);
 
         return bsdf.eval(wiLocal, woLocal, sg);
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
+    {
+        float3 wiLocal = sf.toLocal(sd.V);
+        float3 woLocal = sf.toLocal(wo);
+
+        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, wo, true))
+            return float3(0.f);
+
+        return bsdf.eval_noncosine(wiLocal, woLocal, sg);
     }
 
     [Differentiable]
@@ -176,7 +201,8 @@ struct PBRTDielectricMaterialInstance : MaterialInstanceBase, IMaterialInstance
             return false;
         result.wo = sf.fromLocal(woLocal);
 
-        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, result.wo, true)) return false;
+        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, result.wo, true))
+            return false;
 
         return true;
     }
@@ -186,7 +212,8 @@ struct PBRTDielectricMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, wo, true)) return 0.f;
+        if (!isValidHemisphereReflectionOrTransmission(sd, sf, wiLocal, woLocal, wo, true))
+            return 0.f;
 
         return bsdf.evalPdf(wiLocal, woLocal);
     }
@@ -210,5 +237,4 @@ struct PBRTDielectricMaterialInstance : MaterialInstanceBase, IMaterialInstance
         return bsdf.D.isSingular() ? ((uint)LobeType::DeltaReflection | (uint)LobeType::DeltaTransmission)
                                    : ((uint)LobeType::SpecularReflection | (uint)LobeType::SpecularTransmission);
     }
-
 };

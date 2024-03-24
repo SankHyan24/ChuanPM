@@ -72,6 +72,33 @@ struct DielectricPlateBSDF : IBSDF
                              abs(wiDotH * woDotH / (sqr(woDotH + wiDotH / etaRefract) * abs(wiLocal.z)));
     }
 
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wiLocal, const float3 woLocal, inout S sg)
+    {
+        if (D.isSingular() || eta == 1.0f || wiLocal.z * woLocal.z == 0)
+            return float3(0.0f);
+
+        bool reflect = wiLocal.z * woLocal.z > 0.0f;
+        float relEta = eta;
+        const float etaRefract = 1.005f;
+        float3 h = reflect ? normalize(wiLocal + woLocal) : normalize(wiLocal / etaRefract + woLocal);
+        h *= sign(h.z);
+        float wiDotH = dot(wiLocal, h);
+        float woDotH = dot(woLocal, h);
+        if (wiDotH * wiLocal.z < 0.0f || woDotH * woLocal.z < 0.0f)
+            return float3(0.0f);
+
+        float sinThetaTSq = eta * eta * (1 - wiDotH * wiDotH);
+        float cosThetaT = sqrt(1 - sinThetaTSq); // No clamp needed
+
+        float r1 = evalFresnelDielectric(eta, wiDotH);
+        float r2 = evalFresnelDielectric(eta, -cosThetaT);
+        float t1 = 1.f - r2;
+        float F = r1 + t1 * t1 * r2 / (1.f - r1 * r2);
+
+        return reflect ? D.G2(woLocal, wiLocal) * D.evalNDF(h) * F / (4.f)
+                       : DInside.G2(woLocal, wiLocal) * DInside.evalNDF(h) * (1.0f - F) *
+                             abs(wiDotH * woDotH / (sqr(woDotH + wiDotH / etaRefract)));
+    }
     bool sample<S : ISampleGenerator>(float3 wiLocal, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         wo = {};

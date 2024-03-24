@@ -33,7 +33,7 @@ __exported import Rendering.Materials.IBSDF;
 
 // Uncomment to enable subsurface scattering approximation.
 // Note we need framework support for supplying a subsurface color before it's useful.
-//#define MATERIAL_HAS_SUBSURFACE_COLOR
+// #define MATERIAL_HAS_SUBSURFACE_COLOR
 
 /** Cloth BRDF based on:
     - Neubelt and Pettineo 2013, "Crafting a Next-gen Material Pipeline for The Order: 1886".
@@ -42,18 +42,27 @@ __exported import Rendering.Materials.IBSDF;
 */
 struct ClothBRDF : IBSDF
 {
-    float roughness;            ///< Linear roughness.
-    float3 f0;                  ///< Specular reflectance at normal incidence.
-    float3 diffuseColor;        ///< Diffuse albedo.
-    float3 subsurfaceColor;     ///< Subsurface color.
+    float roughness;        ///< Linear roughness.
+    float3 f0;              ///< Specular reflectance at normal incidence.
+    float3 diffuseColor;    ///< Diffuse albedo.
+    float3 subsurfaceColor; ///< Subsurface color.
 
     // Implementation of IBSDF interface
 
     float3 eval<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
     {
-        if (min(wi.z, wo.z) < kMinCosTheta) return float3(0.f);
+        if (min(wi.z, wo.z) < kMinCosTheta)
+            return float3(0.f);
 
         return evalWeight(wi, wo) * M_1_PI * wo.z;
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        if (min(wi.z, wo.z) < kMinCosTheta)
+            return float3(0.f);
+
+        return evalWeight(wi, wo) * M_1_PI;
     }
 
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
@@ -73,7 +82,8 @@ struct ClothBRDF : IBSDF
 
     float evalPdf(const float3 wi, const float3 wo)
     {
-        if (min(wi.z, wo.z) < kMinCosTheta) return 0.f;
+        if (min(wi.z, wo.z) < kMinCosTheta)
+            return 0.f;
 
         return M_1_PI * wo.z;
     }
@@ -148,20 +158,11 @@ struct ClothBRDF : IBSDF
     /** Microfacet visibility function for cloth.
         Based on Neubelt and Pettineo 2013, "Crafting a Next-gen Material Pipeline for The Order: 1886".
     */
-    float V_Neubelt(float NoI, float NoO)
-    {
-        return 1.f / (4.f * (NoO + NoI - NoO * NoI));
-    }
+    float V_Neubelt(float NoI, float NoO) { return 1.f / (4.f * (NoO + NoI - NoO * NoI)); }
 
-    float diffuseLambert()
-    {
-        return M_1_PI;
-    }
+    float diffuseLambert() { return M_1_PI; }
 
     /** Energy conserving wrapped diffuse term, does *not* include the divide by pi.
-    */
-    float diffuseWrapped(float NoO, float w)
-    {
-        return saturate((NoO + w) / ((1.f + w) * (1.f + w)));
-    }
+     */
+    float diffuseWrapped(float NoO, float w) { return saturate((NoO + w) / ((1.f + w) * (1.f + w))); }
 };

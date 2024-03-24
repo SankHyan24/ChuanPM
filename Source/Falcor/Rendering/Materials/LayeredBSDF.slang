@@ -110,15 +110,18 @@ struct LayeredBSDF : IBSDF
         float z = enterTop ? 1.0f : 0.0f;
         float exitZ = exitTop ? 1.0f : 0.0f;
 
-        if (z == exitZ) result += evalTopOrBottom(exitTop, wi, wo, sg);
+        if (z == exitZ)
+            result += evalTopOrBottom(exitTop, wi, wo, sg);
 
         BSDFSample bs;
-        if (!sampleTopOrBottom(enterTop, wi, bs, sg)) return result;
-        if (bs.isLobe(LobeType::Reflection)) return result;
+        if (!sampleTopOrBottom(enterTop, wi, bs, sg))
+            return result;
+        if (bs.isLobe(LobeType::Reflection))
+            return result;
 
         float3 w = bs.wo;
         float3 weight = bs.weight;
-        HenyeyGreensteinPhaseFunction phase = {g};
+        HenyeyGreensteinPhaseFunction phase = { g };
 
         for (int depth = 0; depth < maxDepth; ++depth)
         {
@@ -132,7 +135,8 @@ struct LayeredBSDF : IBSDF
                     float3 phaseW;
                     float phasePDF;
                     float3 phaseWeight;
-                    if (!phase.sample(-w, phaseW, phasePDF, phaseWeight, sg)) return false;
+                    if (!phase.sample(-w, phaseW, phasePDF, phaseWeight, sg))
+                        return false;
                     weight *= albedo * phaseWeight;
                     w = phaseW;
                     z = zp;
@@ -148,21 +152,31 @@ struct LayeredBSDF : IBSDF
             }
             bool scatterTop = z == 1.0f;
 
-            if (z == exitZ) result += weight * evalTopOrBottom(exitTop, -w, wo, sg);
-            if (!sampleTopOrBottom(scatterTop, -w, bs, sg)) return result;
+            if (z == exitZ)
+                result += weight * evalTopOrBottom(exitTop, -w, wo, sg);
+            if (!sampleTopOrBottom(scatterTop, -w, bs, sg))
+                return result;
             weight *= bs.weight;
             w = bs.wo;
 
-            if (bs.isLobe(LobeType::Transmission)) return result;
+            if (bs.isLobe(LobeType::Transmission))
+                return result;
 
             float rr = min(luminance(weight), 1.0f);
             if (depth > 3 && rr < 0.25f)
             {
-                if (sampleNext1D(sg) >= rr) return false;
+                if (sampleNext1D(sg) >= rr)
+                    return false;
                 weight /= rr;
             }
         }
         return result;
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        // not implemented
+        return eval(wi, wo, sg);
     }
 
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdfOut, out float3 weightOut, out uint lobeType, inout S sg)
@@ -175,7 +189,8 @@ struct LayeredBSDF : IBSDF
         bool enterTop = wi.z > 0.0f;
 
         BSDFSample bs;
-        if (!sampleTopOrBottom(enterTop, wi, bs, sg)) return false;
+        if (!sampleTopOrBottom(enterTop, wi, bs, sg))
+            return false;
         if (bs.isLobe(LobeType::Reflection))
         {
             wo = bs.wo;
@@ -189,7 +204,7 @@ struct LayeredBSDF : IBSDF
         float3 weight = bs.weight;
         float pdf = bs.pdf;
         float z = enterTop ? 1.0f : 0.0f;
-        HenyeyGreensteinPhaseFunction phase = {g};
+        HenyeyGreensteinPhaseFunction phase = { g };
 
         for (int depth = 0; depth < maxDepth; ++depth)
         {
@@ -203,7 +218,8 @@ struct LayeredBSDF : IBSDF
                     float3 phaseW;
                     float phasePDF;
                     float3 phaseWeight;
-                    if (!phase.sample(-w, phaseW, phasePDF, phaseWeight, sg)) return false;
+                    if (!phase.sample(-w, phaseW, phasePDF, phaseWeight, sg))
+                        return false;
                     pdf *= phasePDF;
                     weight *= albedo * phaseWeight;
                     w = phaseW;
@@ -219,7 +235,8 @@ struct LayeredBSDF : IBSDF
                 weight *= exp(-sigma);
             }
             bool scatterTop = z == 1.0f;
-            if (!sampleTopOrBottom(scatterTop, -w, bs, sg)) return false;
+            if (!sampleTopOrBottom(scatterTop, -w, bs, sg))
+                return false;
             weight *= bs.weight;
             w = bs.wo;
             pdf *= bs.pdf;
@@ -229,9 +246,8 @@ struct LayeredBSDF : IBSDF
                 wo = w;
                 pdfOut = evalPdf(wi, w);
                 weightOut = weight;
-                lobeType =
-                    (uint)(w.z*wi.z > 0.0f ? LobeType::Reflection : LobeType::Transmission) &
-                    (uint)(bs.isLobe(LobeType::Delta) ? LobeType::Delta : LobeType::Specular);
+                lobeType = (uint)(w.z * wi.z > 0.0f ? LobeType::Reflection : LobeType::Transmission) &
+                           (uint)(bs.isLobe(LobeType::Delta) ? LobeType::Delta : LobeType::Specular);
 
                 return true;
             }
@@ -239,7 +255,8 @@ struct LayeredBSDF : IBSDF
             float rr = min(luminance(weight), 1.0f);
             if (depth > 3 && rr < 0.25f)
             {
-                if (sampleNext1D(sg) >= rr) return false;
+                if (sampleNext1D(sg) >= rr)
+                    return false;
                 weight /= rr;
                 pdf *= rr;
             }
@@ -261,7 +278,8 @@ struct LayeredBSDF : IBSDF
 
         float pdfCos = abs(wi.z) * M_1_PI;
         float pdfSingle = 0.0f;
-        if (enterTop == exitTop) pdfSingle = evalPdfTopOrBottom(exitTop, wi, wo);
+        if (enterTop == exitTop)
+            pdfSingle = evalPdfTopOrBottom(exitTop, wi, wo);
 
         return lerp(pdfSingle, pdfCos, 0.5f);
     }

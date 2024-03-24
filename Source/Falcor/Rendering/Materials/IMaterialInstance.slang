@@ -37,12 +37,12 @@ import Rendering.Volumes.PhaseFunction;
 import Scene.Material.VolumeProperties;
 
 /** Hints passed in when creating a material instance.
-*/
+ */
 enum MaterialInstanceHints : uint
 {
     None = 0,
-    DisableNormalMapping = 0x1,     ///< Turn off normal mapping if supported.
-    AdjustShadingNormal = 0x2,      ///< Adjust shading normal to reduce risk of back-facing hits.
+    DisableNormalMapping = 0x1, ///< Turn off normal mapping if supported.
+    AdjustShadingNormal = 0x2,  ///< Adjust shading normal to reduce risk of back-facing hits.
 };
 
 bool isNormalMappingEnabled(uint hints)
@@ -56,18 +56,15 @@ bool isAdjustShadingNormalEnabled(uint hints)
 }
 
 /** Describes a BSDF sample.
-*/
+ */
 struct BSDFSample
 {
-    float3  wo;             ///< Sampled direction in world space (normalized).
-    float   pdf;            ///< pdf with respect to solid angle for the sampled direction (wo).
-    float3  weight;         ///< Sample weight f(wi, wo) * dot(wo, n) / pdf(wo).
-    uint    lobeType;       ///< Sampled lobeType. This is a combination of LobeType flags (see LobeType.slang).
+    float3 wo;     ///< Sampled direction in world space (normalized).
+    float pdf;     ///< pdf with respect to solid angle for the sampled direction (wo).
+    float3 weight; ///< Sample weight f(wi, wo) * dot(wo, n) / pdf(wo).
+    uint lobeType; ///< Sampled lobeType. This is a combination of LobeType flags (see LobeType.slang).
 
-    bool isLobe(LobeType type)
-    {
-        return (lobeType & uint(type)) != 0;
-    }
+    bool isLobe(LobeType type) { return (lobeType & uint(type)) != 0; }
 };
 
 /** Describes BSDF properties.
@@ -78,22 +75,27 @@ struct BSDFSample
 */
 struct BSDFProperties
 {
-    float3  emission;                       ///< Radiance emitted in the incident direction (wi).
-    float   roughness;                      ///< Surface roughness on a perceptually linear scale, where 0.0 = perfectly smooth and 1.0 = maximum roughness.
-    float3  guideNormal;                    ///< Representative shading normal in world space that includes effects of normal mapping. Useful as guide for denoisers.
-    uint    flags;                          ///< Flags storing additional properties.
+    float3 emission;    ///< Radiance emitted in the incident direction (wi).
+    float roughness;    ///< Surface roughness on a perceptually linear scale, where 0.0 = perfectly smooth and 1.0 = maximum roughness.
+    float3 guideNormal; ///< Representative shading normal in world space that includes effects of normal mapping. Useful as guide for
+                        ///< denoisers.
+    uint flags;         ///< Flags storing additional properties.
 
     // Approximate directional-hemispherical reflectance/transmittance of the BSDF (black-sky albedo).
     // The exact values are given by the integrals of the BSDF over wo given an incident direction wi.
     // The terms are separated into diffuse and non-diffuse components. Due to energy conservation, the sum is expected to be <= 1.0.
-    float3  diffuseReflectionAlbedo;        ///< Directional-hemispherical diffuse reflectance. This is the ratio of total energy diffusely reflected to the energy incident along wi.
-    float3  diffuseTransmissionAlbedo;      ///< Directional-hemispherical diffuse transmittance. This is the ratio of total energy diffusely transmitted to the energy incident along wi.
-    float3  specularReflectionAlbedo;       ///< Directional-hemispherical specular reflectance. This is the ratio of total energy non-diffusely reflected to the energy incident along wi.
-    float3  specularTransmissionAlbedo;     ///< Directional-hemispherical specular transmittance. This is the ratio of total energy non-diffusely transmitted to the energy incident along wi.
+    float3 diffuseReflectionAlbedo;    ///< Directional-hemispherical diffuse reflectance. This is the ratio of total energy diffusely
+                                       ///< reflected to the energy incident along wi.
+    float3 diffuseTransmissionAlbedo;  ///< Directional-hemispherical diffuse transmittance. This is the ratio of total energy diffusely
+                                       ///< transmitted to the energy incident along wi.
+    float3 specularReflectionAlbedo;   ///< Directional-hemispherical specular reflectance. This is the ratio of total energy non-diffusely
+                                       ///< reflected to the energy incident along wi.
+    float3 specularTransmissionAlbedo; ///< Directional-hemispherical specular transmittance. This is the ratio of total energy
+                                       ///< non-diffusely transmitted to the energy incident along wi.
 
     // Approximate specular reflectance. This is the color of specular reflection.
     // The diffuse reflectance is approximated as a Lambertian given by the diffuse albedo above.
-    float3  specularReflectance;            ///< Specular reflectance at normal incidence (F0). This is in the range [0,1].
+    float3 specularReflectance; ///< Specular reflectance at normal incidence (F0). This is in the range [0,1].
 
     enum Flags : uint
     {
@@ -102,10 +104,12 @@ struct BSDFProperties
 
     property isTransmissive : bool
     {
-        get { return (flags & (uint)Flags::IsTransmissive) != 0; }
+        get
+        {
+            return (flags & (uint)Flags::IsTransmissive) != 0;
+        }
     }
 };
-
 
 #ifndef FALCOR_MATERIAL_INSTANCE_SIZE
 #error Missing FALCOR_MATERIAL_INSTANCE_SIZE
@@ -152,7 +156,13 @@ interface IMaterialInstance
         \return Returns f(wi, wo) * dot(wo, n).
     */
     float3 eval<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg);
-
+    /** Evaluates the material instance without mult cosine term
+         \param[in] wi Incident direction.
+         \param[in] wo Outgoing direction.
+         \param[in,out] sg Sample generator.
+         \return Returns f(wi, wo).
+     */
+    float3 eval_noncosine<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg);
     /** Evaluates the material instance with auto-diff.
         \param[in] diffData Differentiable parameters.
         \param[in] sd Shading data.
@@ -192,7 +202,6 @@ interface IMaterialInstance
     */
     uint getLobeTypes(const ShadingData sd);
 
-
     /** Indicates if the volume properties are taken from the material instance or not
         \return True if the volume properties are textured.
     */
@@ -207,10 +216,7 @@ interface IMaterialInstance
 [open]
 struct MaterialInstanceBase
 {
-    bool hasVolumeProperties()
-    {
-        return false;
-    }
+    bool hasVolumeProperties() { return false; }
 
     VolumeProperties getVolumeProperties()
     {
@@ -219,7 +225,6 @@ struct MaterialInstanceBase
         result.sigmaS = 0.f;
         result.phaseFunction = NullPhaseFunction();
         return result;
-
     }
 }
 

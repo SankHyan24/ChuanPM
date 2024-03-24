@@ -46,13 +46,13 @@ static const float kMinCosTheta = 1e-6f;
 */
 
 /** Albedo is split into four components. They have to sum up to 1.0.
-*/
+ */
 struct AlbedoContributions
 {
-    float3  reflection;     ///< Energy reflected into upper hemisphere
-    float3  absorptionR;    ///< Energy absorbed upper hemisphere
-    float3  transmission;   ///< Energy transmitted into upper hemisphere
-    float3  absorptionT;    ///< Energy absorbed lower hemisphere
+    float3 reflection;   ///< Energy reflected into upper hemisphere
+    float3 absorptionR;  ///< Energy absorbed upper hemisphere
+    float3 transmission; ///< Energy transmitted into upper hemisphere
+    float3 absorptionT;  ///< Energy absorbed lower hemisphere
 
     __init(float3 r, float3 ar, float3 t, float3 at)
     {
@@ -63,34 +63,26 @@ struct AlbedoContributions
     }
 }
 
-AlbedoContributions operator+(const AlbedoContributions a, const AlbedoContributions b)
+AlbedoContributions operator +(const AlbedoContributions a, const AlbedoContributions b)
 {
     return AlbedoContributions(
-        a.reflection + b.reflection,
-        a.absorptionR + b.absorptionR,
-        a.transmission + b.transmission,
-        a.absorptionT + b.absorptionT );
+        a.reflection + b.reflection, a.absorptionR + b.absorptionR, a.transmission + b.transmission, a.absorptionT + b.absorptionT
+    );
 }
 
 AlbedoContributions operator*(const AlbedoContributions a, const AlbedoContributions b)
 {
     return AlbedoContributions(
-        a.reflection * b.reflection,
-        a.absorptionR * b.absorptionR,
-        a.transmission * b.transmission,
-        a.absorptionT * b.absorptionT);
+        a.reflection * b.reflection, a.absorptionR * b.absorptionR, a.transmission * b.transmission, a.absorptionT * b.absorptionT
+    );
 }
 
 AlbedoContributions operator*(const float f, const AlbedoContributions b)
 {
-    return AlbedoContributions(
-        f * b.reflection,
-        f * b.absorptionR,
-        f * b.transmission,
-        f * b.absorptionT);
+    return AlbedoContributions(f * b.reflection, f * b.absorptionR, f * b.transmission, f * b.absorptionT);
 }
 
-AlbedoContributions operator+=(AlbedoContributions a, const AlbedoContributions b)
+AlbedoContributions operator +=(AlbedoContributions a, const AlbedoContributions b)
 {
     a.reflection += b.reflection;
     a.absorptionR += b.absorptionR;
@@ -102,8 +94,8 @@ AlbedoContributions operator+=(AlbedoContributions a, const AlbedoContributions 
 
 struct RoughnessInformation
 {
-    float2  roughnessBSDFNotation;     ///< This is the (mostly meaningless) non-universal roughness of the BSDF
-    float3  scratch;
+    float2 roughnessBSDFNotation; ///< This is the (mostly meaningless) non-universal roughness of the BSDF
+    float3 scratch;
 
     __init()
     {
@@ -122,6 +114,14 @@ interface IBSDF
         \return Returns f(wi, wo) * dot(wo, n).
     */
     float3 eval<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg);
+
+    /** Evaluates the BSDF but not multiplied by the cosine term.
+        \param[in] wi Incident direction.
+        \param[in] wo Outgoing direction.
+        \param[in,out] sg Sample generator.
+        \return Returns f(wi, wo)
+    */
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg);
 
     /** Samples the BSDF.
         \param[in] wi Incident direction.

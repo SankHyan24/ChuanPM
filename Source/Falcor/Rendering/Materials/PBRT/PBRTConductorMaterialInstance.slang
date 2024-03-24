@@ -50,13 +50,21 @@ struct PBRTConductorBSDF : IBSDF, IDifferentiable
     [Differentiable]
     float3 eval<S : ISampleGenerator>(const float3 wiLocal, const float3 woLocal, inout S sg)
     {
-        if (D.isSingular() || min(wiLocal.z, woLocal.z) < 0.0f) return float3(0.0f);
+        if (D.isSingular() || min(wiLocal.z, woLocal.z) < 0.0f)
+            return float3(0.0f);
 
         float3 h = normalize(wiLocal + woLocal);
         float wiDotH = abs(dot(wiLocal, h));
         float3 F = evalFresnelConductor(eta, k, wiDotH);
 
         return D.G2(woLocal, wiLocal) * D.evalNDF(h) * F / (4.0f * abs(wiLocal.z));
+    }
+
+    [Differentiable]
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wiLocal, const float3 woLocal, inout S sg)
+    {
+        // not implemented
+        return eval(wiLocal, woLocal, sg);
     }
 
     bool sample<S : ISampleGenerator>(float3 wiLocal, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
@@ -66,7 +74,8 @@ struct PBRTConductorBSDF : IBSDF, IDifferentiable
         weight = {};
         lobeType = {};
 
-        if (wiLocal.z < 0.0f) return false;
+        if (wiLocal.z < 0.0f)
+            return false;
 
         if (D.isSingular())
         {
@@ -80,7 +89,8 @@ struct PBRTConductorBSDF : IBSDF, IDifferentiable
             float3 h = D.sample(wiLocal, sg);
 
             float3 woLocal = reflect(-wiLocal, h);
-            if (woLocal.z < 0.0f) return false;
+            if (woLocal.z < 0.0f)
+                return false;
             float3 F = evalFresnelConductor(eta, k, dot(h, wiLocal));
 
             wo = woLocal;
@@ -94,7 +104,8 @@ struct PBRTConductorBSDF : IBSDF, IDifferentiable
 
     float evalPdf(const float3 wiLocal, const float3 woLocal)
     {
-        if (D.isSingular() || min(wiLocal.z, woLocal.z) < 0.0f) return 0.0f;
+        if (D.isSingular() || min(wiLocal.z, woLocal.z) < 0.0f)
+            return 0.0f;
         float3 h = normalize(wiLocal + woLocal);
         return D.evalPDF(wiLocal, h) / (4.0f * abs(dot(wiLocal, h)));
     }
@@ -115,7 +126,7 @@ struct PBRTConductorBSDF : IBSDF, IDifferentiable
 
 struct PBRTConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
 {
-    ShadingFrame sf;            ///< Shading frame in world space.
+    ShadingFrame sf; ///< Shading frame in world space.
     PBRTConductorBSDF bsdf;
 
     float3 eval<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
@@ -123,9 +134,21 @@ struct PBRTConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return float3(0.f);
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
 
         return bsdf.eval(wiLocal, woLocal, sg);
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
+    {
+        float3 wiLocal = sf.toLocal(sd.V);
+        float3 woLocal = sf.toLocal(wo);
+
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
+
+        return bsdf.eval_noncosine(wiLocal, woLocal, sg);
     }
 
     [Differentiable]
@@ -134,7 +157,8 @@ struct PBRTConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = diffData.sf.toLocal(sd.V);
         float3 woLocal = diffData.sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return float3(0.f);
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
 
         PBRTConductorBSDF bsdfAD = PBRTConductorBSDF(diffData);
         return bsdfAD.eval(wiLocal, woLocal, sg);
@@ -148,7 +172,8 @@ struct PBRTConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
         bool valid = bsdf.sample(wiLocal, woLocal, result.pdf, result.weight, result.lobeType, sg);
         result.wo = sf.fromLocal(woLocal);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, result.wo) || result.pdf == 0.f) return false;
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, result.wo) || result.pdf == 0.f)
+            return false;
 
         return valid;
     }
@@ -158,7 +183,8 @@ struct PBRTConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return 0.f;
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return 0.f;
 
         return bsdf.evalPdf(wiLocal, woLocal);
     }
@@ -178,5 +204,4 @@ struct PBRTConductorMaterialInstance : MaterialInstanceBase, IMaterialInstance
     {
         return (uint)(bsdf.D.isSingular() ? LobeType::DeltaReflection : LobeType::SpecularReflection);
     }
-
 };

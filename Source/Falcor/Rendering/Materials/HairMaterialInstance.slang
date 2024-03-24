@@ -42,7 +42,7 @@ import Utils.Math.MathHelpers;
 */
 struct HairMaterialInstance : MaterialInstanceBase, IMaterialInstance
 {
-    ShadingFrame sf;    ///< Shading frame in world space.
+    ShadingFrame sf; ///< Shading frame in world space.
     HairChiang16Data data;
 
     __init(const ShadingFrame sf, const HairChiang16Data data)
@@ -60,6 +60,21 @@ struct HairMaterialInstance : MaterialInstanceBase, IMaterialInstance
         HairChiang16 bcsdf = HairChiang16(sd, data);
 
         return bcsdf.eval(wiLocal, woLocal, sg);
+#else
+        // Diffuse BRDF
+        return data.baseColor * (float)M_1_PI * saturate(dot(sf.N, wo));
+#endif
+    }
+
+    float3 eval_noncosine<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
+    {
+#if BCSDF == HairChiang
+        float3 wiLocal = sf.toLocal(sd.V);
+        float3 woLocal = sf.toLocal(wo);
+
+        HairChiang16 bcsdf = HairChiang16(sd, data);
+
+        return bcsdf.eval_noncosine(wiLocal, woLocal, sg);
 #else
         // Diffuse BRDF
         return data.baseColor * (float)M_1_PI * saturate(dot(sf.N, wo));
@@ -137,5 +152,4 @@ struct HairMaterialInstance : MaterialInstanceBase, IMaterialInstance
         // TODO: Update this when lobes are classified as diffuse or specular according to roughness.
         return (uint)LobeType::DiffuseReflection | (uint)LobeType::DiffuseTransmission;
     }
-
 };

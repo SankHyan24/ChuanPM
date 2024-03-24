@@ -46,6 +46,15 @@ struct LambertDiffuseBTDF : IBSDF, IDifferentiable
         return M_1_PI * albedo * -wo.z;
     }
 
+    [Differentiable]
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        if (min(wi.z, -wo.z) < kMinCosTheta)
+            return float3(0.f);
+
+        return M_1_PI * albedo;
+    }
+
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         wo = sample_cosine_hemisphere_concentric(sampleNext2D(sg), pdf);

@@ -80,6 +80,11 @@ struct OrenNayarBRDF : IBSDF
         return albedo * M_1_PI * (A + B * cosDiff * sinAlpha * tanBeta) * wo.z;
     }
 
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        // not implemented
+        return eval(wi, wo, sg);
+    }
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         // Note that cosine sampling can become rather inefficient if we have high retro-reflectivity

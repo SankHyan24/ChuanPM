@@ -32,10 +32,10 @@ __exported import Rendering.Materials.ClothBRDF;
 import Utils.Math.MathHelpers;
 
 /** Implementation of a simple cloth BSDF.
-*/
+ */
 struct ClothMaterialInstance : MaterialInstanceBase, IMaterialInstance
 {
-    ShadingFrame sf;            ///< Shading frame in world space.
+    ShadingFrame sf; ///< Shading frame in world space.
     ClothBRDF brdf;
 
     __init(const ShadingFrame sf, const ClothBRDF brdf)
@@ -49,9 +49,20 @@ struct ClothMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return float3(0.f);
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
 
         return brdf.eval(wiLocal, woLocal, sg);
+    }
+    float3 eval_noncosine<S : ISampleGenerator>(const ShadingData sd, const float3 wo, inout S sg)
+    {
+        float3 wiLocal = sf.toLocal(sd.V);
+        float3 woLocal = sf.toLocal(wo);
+
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return float3(0.f);
+
+        return brdf.eval_noncosine(wiLocal, woLocal, sg);
     }
 
     [Differentiable]
@@ -65,10 +76,7 @@ struct ClothMaterialInstance : MaterialInstanceBase, IMaterialInstance
         return sampleReference(sd, sg, result);
     }
 
-    float evalPdf(const ShadingData sd, const float3 wo, bool useImportanceSampling = true)
-    {
-        return evalPdfReference(sd, wo);
-    }
+    float evalPdf(const ShadingData sd, const float3 wo, bool useImportanceSampling = true) { return evalPdfReference(sd, wo); }
 
     BSDFProperties getProperties(const ShadingData sd)
     {
@@ -87,11 +95,7 @@ struct ClothMaterialInstance : MaterialInstanceBase, IMaterialInstance
         return p;
     }
 
-    uint getLobeTypes(const ShadingData sd)
-    {
-        return (uint)LobeType::DiffuseReflection;
-    }
-
+    uint getLobeTypes(const ShadingData sd) { return (uint)LobeType::DiffuseReflection; }
 
     // Additional functions
 
@@ -108,7 +112,8 @@ struct ClothMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 woLocal = sample_cosine_hemisphere_concentric(sampleNext2D(sg), result.pdf); // pdf = cos(theta) / pi
         result.wo = sf.fromLocal(woLocal);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, result.wo) || result.pdf == 0.f) return false;
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, result.wo) || result.pdf == 0.f)
+            return false;
 
         result.weight = brdf.eval(wiLocal, woLocal, sg) / result.pdf;
         result.lobeType = (uint)LobeType::DiffuseReflection;
@@ -126,9 +131,9 @@ struct ClothMaterialInstance : MaterialInstanceBase, IMaterialInstance
         float3 wiLocal = sf.toLocal(sd.V);
         float3 woLocal = sf.toLocal(wo);
 
-        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo)) return 0.f;
+        if (!isValidHemisphereReflection(sd, sf, wiLocal, woLocal, wo))
+            return 0.f;
 
         return woLocal.z * M_1_PI; // pdf = cos(theta) / pi
     }
-
 };

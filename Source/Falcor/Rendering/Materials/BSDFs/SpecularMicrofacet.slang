@@ -82,6 +82,13 @@ struct SpecularMicrofacetBRDF : IBSDF, IDifferentiable
         return F * D * G * 0.25f / wi.z;
     }
 
+    [Differentiable]
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        // not implemented
+        return eval(wi, wo, sg);
+    }
+
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         // Default initialization to avoid divergence at returns.
@@ -245,6 +252,13 @@ struct SpecularMicrofacetBSDF : IBSDF, IDifferentiable
             float t = eta * eta * wiDotH * woDotH / (wi.z * sqrtDenom * sqrtDenom);
             return transmissionAlbedo * (1.f - F) * D * G * abs(t);
         }
+    }
+
+    [Differentiable]
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        // not implemented
+        return eval(wi, wo, sg);
     }
 
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)

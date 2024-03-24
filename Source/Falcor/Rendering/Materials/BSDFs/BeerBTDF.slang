@@ -43,6 +43,11 @@ struct BeerBTDF : IBSDF
     }
 
     float3 eval<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg) { return float3(0.f); }
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        // not implemented
+        return float3(0.f);
+    }
 
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {

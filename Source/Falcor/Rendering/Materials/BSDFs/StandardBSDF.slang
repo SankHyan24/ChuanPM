@@ -239,6 +239,21 @@ struct StandardBSDF : IBSDF, IDifferentiable
         return result;
     }
 
+    [Differentiable]
+    float3 eval_noncosine<S : ISampleGenerator>(const float3 wi, const float3 wo, inout S sg)
+    {
+        float3 result = 0.f;
+        if (pDiffuseReflection > 0.f)
+            result += (1.f - specTrans) * (1.f - diffTrans) * diffuseReflection.eval_noncosine(wi, wo, sg);
+        if (pDiffuseTransmission > 0.f)
+            result += (1.f - specTrans) * diffTrans * diffuseTransmission.eval_noncosine(wi, wo, sg);
+        if (pSpecularReflection > 0.f)
+            result += (1.f - specTrans) * specularReflection.eval_noncosine(wi, wo, sg);
+        if (pSpecularTransmission > 0.f)
+            result += specTrans * (specularTransmission.eval_noncosine(wi, wo, sg));
+        return result;
+    }
+
     bool sample<S : ISampleGenerator>(const float3 wi, out float3 wo, out float pdf, out float3 weight, out uint lobeType, inout S sg)
     {
         // Default initialization to avoid divergence at returns.
