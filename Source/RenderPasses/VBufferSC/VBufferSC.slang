@@ -38,6 +38,7 @@ RWTexture2D<float4> gViewW;
 
 RWTexture2D<float4> gThp;      //
 RWTexture2D<float4> gEmissive; //
+RWTexture2D<float4> gNormale;  //
 
 RWTexture2D<uint> gTime;
 RWTexture2D<float> gMask;

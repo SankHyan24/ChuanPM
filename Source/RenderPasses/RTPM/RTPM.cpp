@@ -56,7 +56,7 @@ const ChannelList kInputChannels = {
     {"viewW", "gViewWorld", "World View Direction", false},
     {"thp", "gThp", "Throughput", false},
     {"emissive", "gEmissive", "Emissive", false},
-};
+    {"normale", "gNormale", "The Geometry normal of the intersected triangle", false}};
 
 const ChannelList kOutputChannels = {
     {"PhotonImage",

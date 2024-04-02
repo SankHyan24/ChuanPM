@@ -35,6 +35,7 @@ Texture2D<PackedHitInfo> gVBuffer;
 Texture2D<float4> gViewWorld;
 Texture2D<float4> gThp;
 Texture2D<float4> gEmissive;
+Texture2D<float4> gNormale;
 
 // Outputs
 RWTexture2D<float4> gPhotonImage;
