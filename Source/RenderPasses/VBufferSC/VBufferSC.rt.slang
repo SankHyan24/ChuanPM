@@ -188,12 +188,10 @@ void handleHit(const HitInfo hit, inout RayData rayData)
 
     // if diffuse, if so, write hit and terminate
     BSDFProperties bsdfProperties = mi.getProperties(sd);
-    // bool isDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
     bool isDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
     // if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)) &&
-    //     (!rayData.terminated || isDiffuse))
+    // (!rayData.terminated || isDiffuse))
     if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)))
-    // if (true)
     {
         gVBufferSC.writeHit(
             launchIndex, WorldRayOrigin(), WorldRayDirection(), throughPut, mi.getProperties(sd).emission, hit, rayData.distance
@@ -215,7 +213,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
 // Shader entry point for miss shader.
 //
 
-[shader("miss")] void miss(inout RayData rayData)
+[shader("miss")]
+void miss(inout RayData rayData)
 {
     // Write invalid hit to output buffer.
     uint2 launchIndex = DispatchRaysIndex().xy;
@@ -223,11 +222,12 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     gVBufferSC.writeMiss(launchIndex);
 }
 
-    //
-    // Shader entry points for TriangleMesh hit groups.
-    //
+//
+// Shader entry points for TriangleMesh hit groups.
+//
 
-    [shader("anyhit")] void anyHit(inout RayData rayData, BuiltInTriangleIntersectionAttributes attribs)
+[shader("anyhit")]
+void anyHit(inout RayData rayData, BuiltInTriangleIntersectionAttributes attribs)
 {
     if (VBufferSC::kUseAlphaTest)
     {
@@ -240,7 +240,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     }
 }
 
-[shader("closesthit")] void closestHit(inout RayData rayData, BuiltInTriangleIntersectionAttributes attribs)
+[shader("closesthit")]
+void closestHit(inout RayData rayData, BuiltInTriangleIntersectionAttributes attribs)
 {
     // Store hit information. Note we don't access the materials here.
     TriangleHit triangleHit;
@@ -252,11 +253,12 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     // preserved
 }
 
-    //
-    // Shader entry points for DisplacedTriangleMesh hit groups.
-    //
+//
+// Shader entry points for DisplacedTriangleMesh hit groups.
+//
 
-    [shader("intersection")] void displacedTriangleMeshIntersection()
+[shader("intersection")]
+void displacedTriangleMeshIntersection()
 {
     const Ray ray = Ray(WorldRayOrigin(), WorldRayDirection(), RayTMin(), RayTCurrent());
     DisplacedTriangleMeshIntersector::Attribs attribs;
@@ -267,7 +269,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     }
 }
 
-[shader("closesthit")] void displacedTriangleMeshClosestHit(inout RayData rayData, DisplacedTriangleMeshIntersector::Attribs attribs)
+[shader("closesthit")]
+void displacedTriangleMeshClosestHit(inout RayData rayData, DisplacedTriangleMeshIntersector::Attribs attribs)
 {
     // Store hit information. Note we don't access the materials here.
     DisplacedTriangleHit displacedTriangleHit;
@@ -281,11 +284,12 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     handleHit(HitInfo(displacedTriangleHit), rayData);
 }
 
-    //
-    // Shader entry points for Curve hit groups.
-    //
+//
+// Shader entry points for Curve hit groups.
+//
 
-    [shader("intersection")] void curveIntersection()
+[shader("intersection")]
+void curveIntersection()
 {
     const Ray ray = Ray(WorldRayOrigin(), WorldRayDirection(), RayTMin(), RayTCurrent());
     CurveIntersector::Attribs attribs;
@@ -296,7 +300,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     }
 }
 
-[shader("closesthit")] void curveClosestHit(inout RayData rayData, CurveIntersector::Attribs attribs)
+[shader("closesthit")]
+void curveClosestHit(inout RayData rayData, CurveIntersector::Attribs attribs)
 {
     // Store hit information. Note we don't access the materials here.
     CurveHit curveHit;
@@ -309,11 +314,12 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     handleHit(HitInfo(curveHit), rayData);
 }
 
-    //
-    // Shader entry points for SDFGrid hit groups.
-    //
+//
+// Shader entry points for SDFGrid hit groups.
+//
 
-    [shader("intersection")] void sdfGridIntersection()
+[shader("intersection")]
+void sdfGridIntersection()
 {
     const Ray ray = Ray(WorldRayOrigin(), WorldRayDirection(), RayTMin(), RayTCurrent());
     SDFGridHitData sdfGridHitData;
@@ -324,7 +330,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     }
 }
 
-[shader("closesthit")] void sdfGridClosestHit(inout RayData rayData, SDFGridHitData sdfGridHitData)
+[shader("closesthit")]
+void sdfGridClosestHit(inout RayData rayData, SDFGridHitData sdfGridHitData)
 {
     // Store hit information. Note we don't access the materials here.
     SDFGridHit sdfGridHit;
@@ -336,11 +343,12 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     handleHit(HitInfo(sdfGridHit), rayData);
 }
 
-    //
-    // Shader entry point for ray generation shader.
-    //
+//
+// Shader entry point for ray generation shader.
+//
 
-    [shader("raygeneration")] void rayGen()
+[shader("raygeneration")]
+void rayGen()
 {
     uint2 launchIndex = DispatchRaysIndex().xy;
 

@@ -89,6 +89,18 @@ struct VBufferSC
             const TriangleHit triangleHit = hit.getTriangleHit();
             v = gScene.getVertexData(triangleHit);
             prevPosW = gScene.getPrevPosW(triangleHit);
+
+            // normal
+            uint materialID = gScene.getMaterialID(triangleHit.instanceID);
+            let lod = ExplicitLodTextureSampler(0.f);
+            ShadingData sd = gScene.materials.prepareShadingData(v, materialID, -rayDir, lod);
+            float3 geometry_normal = sd.faceN;
+            adjustShadingNormal(sd, sd.frame);
+            float3 shading_normal = sd.frame.N;
+            float normal_adjust_factor = dot(geometry_normal, shading_normal);
+            gNormale[pixel] = float4(geometry_normal, 1.f);
+            // gNormale[pixel] = float4(shading_normal, 1.f);
+            // gNormale[pixel] = float4(normal_adjust_factor, normal_adjust_factor, normal_adjust_factor, 1.f);
         }
         else if (hit.getType() == HitType::DisplacedTriangle)
         {
