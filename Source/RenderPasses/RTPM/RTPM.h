@@ -122,6 +122,11 @@ private:
      */
     void collectPhotons(RenderContext* pRenderContext, const RenderData& renderData);
 
+    /** Visualize the Photons to debug
+     *
+     */
+    void visualizePhotons(RenderContext* pRenderContext, const RenderData& renderData);
+
     /** Prepares Program Variables and binds the sample generator
      */
     void prepareVars();
@@ -276,4 +281,7 @@ private:
     PhotonBuffers mGlobalBuffers;  ///< Buffers for the global photons
 
     ref<Texture> mRandNumSeedBuffer; ///< Buffer for the random seeds
+
+    // PMVisualizer
+    bool mUsePhotonVisualization = false;
 };

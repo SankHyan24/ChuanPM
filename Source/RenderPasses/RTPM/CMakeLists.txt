@@ -4,6 +4,7 @@ target_sources(RTPM PRIVATE
     RTPM.cpp
     RTPM.h
     PMCollect.cs.slang
+    PMVisual.cs.slang
     PMGenerate.rt.slang
     PMHashFunction.slang
 )

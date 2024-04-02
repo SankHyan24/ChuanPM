@@ -43,6 +43,8 @@ namespace
 {
 const char kShaderGeneratePhoton[] = "RenderPasses/RTPM/PMGenerate.rt.slang";
 const char kShaderCollectPhoton[] = "RenderPasses/RTPM/PMCollect.cs.slang";
+const char kShaderVisualPhoton[] = "RenderPasses/RTPM/PMVisual.cs.slang";
+const char kUsePhotonVisualization[] = "usePhotonVisualization";
 
 // Ray tracing settings that affect the traversal stack size.
 // These should be set as small as possible.
@@ -85,7 +87,8 @@ void RTPM::parseProperties(const Properties& props)
 {
     for (const auto& [key, value] : props)
     {
-        // sc: no need now
+        if (key == kUsePhotonVisualization)
+            mUsePhotonVisualization = value;
     }
 }
 
@@ -93,6 +96,7 @@ Properties RTPM::getProperties() const
 {
     Properties props;
     // sc: not have now
+    props[kUsePhotonVisualization] = mUsePhotonVisualization;
     return props;
 }
 
@@ -236,7 +240,7 @@ void RTPM::execute(RenderContext* pRenderContext, const RenderData& renderData)
     generatePhotons(pRenderContext, renderData);
 
     // Gather the photons with short rays
-    collectPhotons(pRenderContext, renderData);
+    mUsePhotonVisualization ? visualizePhotons(pRenderContext, renderData) : collectPhotons(pRenderContext, renderData);
     mFrameCount++;
 
     if (mUseStatisticProgressivePM)
@@ -360,6 +364,88 @@ void RTPM::collectPhotons(RenderContext* pRenderContext, const RenderData& rende
     {
         ProgramDesc desc;
         desc.addShaderLibrary(kShaderCollectPhoton).csEntry("main").setShaderModel(ShaderModel::SM6_5);
+        desc.addTypeConformances(mpScene->getTypeConformances());
+
+        DefineList defines;
+        defines.add(mpScene->getSceneDefines());
+        defines.add(mpSampleGenerator->getDefines());
+
+        defines.add("INFO_TEXTURE_HEIGHT", std::to_string(kInfoTexHeight));
+        defines.add("NUM_PHOTONS_PER_BUCKET", std::to_string(mNumPhotonsPerBucket));
+        defines.add("NUM_BUCKETS", std::to_string(mNumBuckets));
+        defines.add("PHOTON_FACE_NORMAL", mEnableFaceNormalRejection ? "1" : "0");
+
+        mpCSCollect = ComputePass::create(mpDevice, desc, defines, true);
+    }
+
+    // Prepare program vars. This may trigger shader compilation.
+
+    // Set constants.
+    auto var = mpCSCollect->getRootVar();
+    // Set Scene data. Is needed for shading
+    mpScene->setRaytracingShaderData(pRenderContext, var, 1);
+    mpSampleGenerator->bindShaderData(var);
+
+    std::string nameBuf = "PerFrame";
+    var[nameBuf]["gFrameCount"] = mFrameCount;
+    var[nameBuf]["gCausticRadius"] = mCausticRadius;
+    var[nameBuf]["gGlobalRadius"] = mGlobalRadius;
+    var[nameBuf]["gCausticHashScaleFactor"] = 1.f / mCausticRadius;
+    var[nameBuf]["gGlobalHashScaleFactor"] = 1.f / mGlobalRadius;
+
+    // Set constant buffer only if changes where made
+    if (mSetConstantBuffers)
+    {
+        nameBuf = "CB";
+        var[nameBuf]["gEmissiveScale"] = mIntensityScalar;
+        var[nameBuf]["gCollectGlobalPhotons"] = !mDisableGlobalCollection;
+        var[nameBuf]["gCollectCausticPhotons"] = !mDisableCausticCollection;
+        var[nameBuf]["gQuadProbeIt"] = mQuadraticProbeIterations;
+        var[nameBuf]["gEnableStochasicGathering"] = mEnableStochasticCollection;
+        var[nameBuf]["gCollectProbability"] = mStochasticCollectProbability;
+    }
+
+    var["gGlobalHashBucket"] = mpGlobalBuckets;
+    var["gCausticHashBucket"] = mpCausticBuckets;
+
+    // set the buffers
+    var["gCausticPos"] = mCausticBuffers.position;
+    var["gCausticFlux"] = mCausticBuffers.infoFlux;
+    var["gCausticDir"] = mCausticBuffers.infoDir;
+    var["gGlobalPos"] = mGlobalBuffers.position;
+    var["gGlobalFlux"] = mGlobalBuffers.infoFlux;
+    var["gGlobalDir"] = mGlobalBuffers.infoDir;
+
+    // Lamda for binding textures. These needs to be done per-frame as the buffers may change anytime.
+    auto bindAsTex = [&](const ChannelDesc& desc)
+    {
+        if (!desc.texname.empty())
+        {
+            var[desc.texname] = renderData[desc.name]->asTexture();
+        }
+    };
+    // Bind input and output textures
+    for (auto& channel : kInputChannels)
+        bindAsTex(channel);
+    bindAsTex(kOutputChannels[0]);
+
+    // Get dimensions of ray dispatch.
+    const uint2 targetDim = renderData.getDefaultTextureDims();
+    FALCOR_ASSERT(targetDim.x > 0 && targetDim.y > 0);
+
+    FALCOR_ASSERT(pRenderContext && mpCSCollect);
+
+    // pRenderContext->raytrace(mTracerCollect.pProgram.get(), mTracerCollect.pVars.get(), targetDim.x, targetDim.y, 1);
+    mpCSCollect->execute(pRenderContext, uint3(targetDim, 1));
+}
+
+void RTPM::visualizePhotons(RenderContext* pRenderContext, const RenderData& renderData)
+{
+    FALCOR_PROFILE(pRenderContext, "visualize photons");
+    if (!mpCSCollect)
+    {
+        ProgramDesc desc;
+        desc.addShaderLibrary(kShaderVisualPhoton).csEntry("main").setShaderModel(ShaderModel::SM6_5);
         desc.addTypeConformances(mpScene->getTypeConformances());
 
         DefineList defines;
@@ -864,6 +950,9 @@ void RTPM::renderUI(Gui::Widgets& widget)
 {
     float2 dummySpacing = float2(0, 10);
     bool dirty = false;
+
+    // sc: new visual option
+    mResetCS |= widget.checkbox("Photon visualization?", mUsePhotonVisualization);
 
     // Info
     widget.text("Iterations: " + std::to_string(mFrameCount));
