@@ -216,8 +216,9 @@ void closestHit(inout RayData rayData: SV_RayPayload, BuiltInTriangleIntersectio
     if (kUsePhotonFaceNormal)
     {
         // Flip face normal to point in photon hit direction
-        sd.faceN = dot(incomingRayDir, sd.faceN) > 0 ? sd.faceN : -sd.faceN;
-        float2 sph = toSphericalCoordinate(sd.faceN);
+        float faceSignFactor = dot(incomingRayDir, sd.faceN) > 0 ? 1. : -1.;
+        sd.faceN *= faceSignFactor;
+        float2 sph = toSphericalCoordinate(sd.frame.N);
         // convert to two float16 and store in payload
         rayData.encodedFaceNormal = (f32tof16(sph.x) << 16) | f32tof16(sph.y);
     }

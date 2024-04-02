@@ -98,7 +98,14 @@ ShadingData loadShadingData(const HitInfo hit, const float3 rayDir, const ITextu
     return sd;
 }
 
-float3 photonContribution(in ShadingData sd, in const IMaterialInstance mi, uint photonIndex, inout SampleGenerator sg, bool isCaustic)
+float3 photonContribution(
+    in ShadingData sd,
+    in const IMaterialInstance mi,
+    uint photonIndex,
+    inout SampleGenerator sg,
+    bool isCaustic,
+    uint2 launchIndex
+)
 {
     const uint2 photonIndex2D = uint2(photonIndex / kInfoTexHeight, photonIndex % kInfoTexHeight);
     // get caustic or global photon
@@ -126,7 +133,7 @@ float3 photonContribution(in ShadingData sd, in const IMaterialInstance mi, uint
         float sinTheta = sin(photon.flux.w);
         float3 photonFaceN = float3(cos(photon.dir.w) * sinTheta, cos(photon.flux.w), sin(photon.dir.w) * sinTheta);
         photonFaceN = normalize(photonFaceN);
-        float3 faceN = dot(sd.V, sd.faceN) > 0 ? sd.faceN : -sd.faceN;
+        float3 faceN = dot(sd.V, sd.frame.N) > 0 ? sd.frame.N : -sd.frame.N;
         // Dot product has to be negative (View dir points to surface)
         if (dot(faceN, photonFaceN) < 0.9f)
             return float3(0);
@@ -209,7 +216,7 @@ float3 collectPhotons(in HitInfo hitInfo, in float3 dirVec, uint2 launchIndex, b
                     for (uint idx = startIdx; idx < photonCellIt; idx++)
                     {
                         uint photonIdx = isCaustic ? gCausticHashBucket[b].photonIdx[idx] : gGlobalHashBucket[b].photonIdx[idx];
-                        cellRadiance += photonContribution(sd, mi, photonIdx, sg, isCaustic);
+                        cellRadiance += photonContribution(sd, mi, photonIdx, sg, isCaustic, launchIndex);
                         // add a stochasic step on top i if enabled
                         if (gEnableStochasicGathering)
                         {
