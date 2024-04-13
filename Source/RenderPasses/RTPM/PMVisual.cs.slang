@@ -140,15 +140,12 @@ float3 photonContribution(
     }
 
     // Radius test
-    if (!hitSphere(photonPos, radius, sd.posW))
+    if (!hitSphere(photonPos, 0.001, sd.posW))
         return float3(0);
-    if (dot(gNormale[launchIndex].xyz, sd.frame.N) <= 0.9999)
-        return float3(0.f);
-    float3 f_r = mi.eval_noncosine(sd, -photon.dir.xyz, sg);
-    if (dot(gNormale[launchIndex].xyz, sd.frame.N) <= 0.9999)
-        return float3(0.f);
 
-    return float3(0.000001, 0.000001, 0.000001);
+    float3 f_r = mi.eval_noncosine(sd, -photon.dir.xyz, sg);
+
+    return float3(0.0001, 0.0001, 0.0001);
 }
 
 // returns geometrically distributed random number generator
@@ -279,10 +276,7 @@ void main(uint2 DTid: SV_DispatchThreadID, uint2 Gid: SV_GroupID, uint2 GTid: SV
 
     // Add emission
     float3 pixEmission = gEmissive[DTid].xyz;
-    radiance += pixEmission * thp.xyz;
-    {
-        radiance = reflectBRDF(hit, viewVec, DTid, false);
-    }
+
     // Accumulate the image (Put in accumulate pass ? )
     if (gFrameCount > 0)
     {

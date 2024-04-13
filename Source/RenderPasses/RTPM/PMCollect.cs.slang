@@ -264,14 +264,14 @@ void main(uint2 DTid: SV_DispatchThreadID, uint2 Gid: SV_GroupID, uint2 GTid: SV
     radiance += pixEmission * thp.xyz;
 
     // Accumulate the image (Put in accumulate pass ? )
-    if (gFrameCount > 0)
-    {
-        float3 last = gPhotonImage[DTid].xyz;
-        float frameCountF = float(gFrameCount);
-        last *= frameCountF;
-        radiance += last;
-        radiance /= frameCountF + 1.0;
-    }
+    // if (gFrameCount > 0)
+    // {
+    //     float3 last = gPhotonImage[DTid].xyz;
+    //     float frameCountF = float(gFrameCount);
+    //     last *= frameCountF;
+    //     radiance += last;
+    //     radiance /= frameCountF + 1.0;
+    // }
 
     gPhotonImage[DTid] = float4(radiance, 1);
 }

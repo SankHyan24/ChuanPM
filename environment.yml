@@ -1,4 +1,4 @@
-name: falcor-pytorch
+name: fcpy
 channels:
     - pytorch
     - nvidia
