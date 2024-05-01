@@ -39,6 +39,7 @@ RWTexture2D<float4> gViewW;
 RWTexture2D<float4> gThp;      //
 RWTexture2D<float4> gEmissive; //
 RWTexture2D<float4> gNormale;  //
+RWTexture2D<float4> gAlbedo;   //
 
 RWTexture2D<uint> gTime;
 RWTexture2D<float> gMask;
@@ -71,13 +72,23 @@ struct VBufferSC
         }
     }
 
-    void writeHit(uint2 pixel, float3 rayOrigin, float3 rayDir, float3 throughPut, float3 emissive, const HitInfo hit, const float linZ)
+    void writeHit(
+        uint2 pixel,
+        float3 rayOrigin,
+        float3 rayDir,
+        float3 throughPut,
+        float3 emissive,
+        const HitInfo hit,
+        const float linZ,
+        float3 color
+    )
     // void writeHit(uint2 pixel, float3 rayOrigin, float3 rayDir, float3 thp, float3 emissive, const HitInfo hit)
     {
         gVBuffer[pixel] = hit.getData();
         gThp[pixel] = float4(throughPut, 1.f);
         gEmissive[pixel] = float4(emissive, 1.f);
         gViewW[pixel] = float4(-rayDir, 1.f);
+        gAlbedo[pixel] = float4(color, 1.f);
 
         VertexData v;
         float depth = 1.f;
@@ -99,6 +110,7 @@ struct VBufferSC
             float3 shading_normal = sd.frame.N;
             float normal_adjust_factor = dot(geometry_normal, shading_normal);
             // gNormale[pixel] = float4(geometry_normal, 1.f);
+
             gNormale[pixel] = float4(shading_normal, 1.f);
             // gNormale[pixel] = float4(normal_adjust_factor, normal_adjust_factor, normal_adjust_factor, 1.f);
         }

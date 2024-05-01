@@ -82,6 +82,7 @@ const ChannelList kVBufferExtraChannels = {
     { "throughput",     "gThp",             "Throughput for transparent materials", true /* optional */, ResourceFormat::RGBA32Float    },
     { "emissive",       "gEmissive",        "Emissive color",                   true /* optional */, ResourceFormat::RGBA32Float    },
     { "normale",        "gNormale",         "The G-normal of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
+    { "albedo",        "gAlbedo",           "The Albedo of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
     // clang-format on
 };
 }; // namespace

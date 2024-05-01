@@ -154,6 +154,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     uint2 launchIndex = DispatchRaysIndex().xy;
     const bool isCurveHit = hit.getType() == HitType::Curve;
     let lod = ExplicitLodTextureSampler(0.f);
+    // albedo
+    float3 albedo = float3(0.f);
 
     // load shading data
     ShadingData sd = loadShadingData(hit, rayData.origin, normalize(rayData.direction), lod);
@@ -193,8 +195,9 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     // (!rayData.terminated || isDiffuse))
     if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)))
     {
+        albedo = mi.eval(sd, sd.frame.N, rayData.sg);
         gVBufferSC.writeHit(
-            launchIndex, WorldRayOrigin(), WorldRayDirection(), throughPut, mi.getProperties(sd).emission, hit, rayData.distance
+            launchIndex, WorldRayOrigin(), WorldRayDirection(), throughPut, mi.getProperties(sd).emission, hit, rayData.distance, albedo
         );
         rayData.terminated = true;
     }
