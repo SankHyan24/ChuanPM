@@ -195,9 +195,22 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     // (!rayData.terminated || isDiffuse))
     if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)))
     {
-        albedo = mi.eval(sd, sd.frame.N, rayData.sg);
+        float3 normal = sd.frame.N;
+        if (dot(normal, sd.V) < 0)
+            normal = -normal;
+
+        albedo = mi.eval(sd, normal, rayData.sg);
+        float3 hit_pos = sd.posW;
         gVBufferSC.writeHit(
-            launchIndex, WorldRayOrigin(), WorldRayDirection(), throughPut, mi.getProperties(sd).emission, hit, rayData.distance, albedo
+            launchIndex,
+            WorldRayOrigin(),
+            WorldRayDirection(),
+            throughPut,
+            mi.getProperties(sd).emission,
+            hit,
+            rayData.distance,
+            albedo,
+            hit_pos
         );
         rayData.terminated = true;
     }

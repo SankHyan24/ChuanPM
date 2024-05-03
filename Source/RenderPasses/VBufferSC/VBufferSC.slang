@@ -40,6 +40,7 @@ RWTexture2D<float4> gThp;      //
 RWTexture2D<float4> gEmissive; //
 RWTexture2D<float4> gNormale;  //
 RWTexture2D<float4> gAlbedo;   //
+RWTexture2D<float4> gPosition; //
 
 RWTexture2D<uint> gTime;
 RWTexture2D<float> gMask;
@@ -80,7 +81,8 @@ struct VBufferSC
         float3 emissive,
         const HitInfo hit,
         const float linZ,
-        float3 color
+        float3 color,
+        float3 position
     )
     // void writeHit(uint2 pixel, float3 rayOrigin, float3 rayDir, float3 thp, float3 emissive, const HitInfo hit)
     {
@@ -89,6 +91,7 @@ struct VBufferSC
         gEmissive[pixel] = float4(emissive, 1.f);
         gViewW[pixel] = float4(-rayDir, 1.f);
         gAlbedo[pixel] = float4(color, 1.f);
+        gPosition[pixel] = float4(position, 1.f);
 
         VertexData v;
         float depth = 1.f;
