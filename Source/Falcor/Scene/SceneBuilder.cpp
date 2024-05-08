@@ -430,6 +430,7 @@ namespace Falcor
         mesh.isFrontFaceCW = pTriangleMesh->getFrontFaceCW();
         mesh.pMaterial = pMaterial;
         mesh.isAnimated = isAnimated;
+        mesh.isAnimated = true;
 
         std::vector<float3> positions(vertices.size());
         std::vector<float3> normals(vertices.size());
