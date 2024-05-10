@@ -84,6 +84,11 @@ const ChannelList kVBufferExtraChannels = {
     { "normale",        "gNormale",         "The G-normal of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
     { "albedo",        "gAlbedo",           "The Albedo of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
     { "position",        "gPosition",           "The Position of the hitpoint in the world",true /* optional */, ResourceFormat::RGBA32Float    },
+    { "viewW_first",          "gViewW_first",           "View direction in world space",    true /* optional */, ResourceFormat::RGBA32Float }, // TODO: Switch to packed 2x16-bit snorm format.
+    { "throughput_first",     "gThp_first",             "Throughput for transparent materials", true /* optional */, ResourceFormat::RGBA32Float    },
+    { "normale_first",        "gNormale_first",         "The G-normal of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
+    { "albedo_first",        "gAlbedo_first",           "The Albedo of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
+    { "position_first",        "gPosition_first",           "The Position of the hitpoint in the world",true /* optional */, ResourceFormat::RGBA32Float    }
     // clang-format on
 };
 }; // namespace

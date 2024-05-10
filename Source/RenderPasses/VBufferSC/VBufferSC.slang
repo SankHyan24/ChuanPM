@@ -42,6 +42,12 @@ RWTexture2D<float4> gNormale;  //
 RWTexture2D<float4> gAlbedo;   //
 RWTexture2D<float4> gPosition; //
 
+RWTexture2D<float4> gViewW_first;
+RWTexture2D<float4> gThp_first;      //
+RWTexture2D<float4> gNormale_first;  //
+RWTexture2D<float4> gAlbedo_first;   //
+RWTexture2D<float4> gPosition_first; //
+
 RWTexture2D<uint> gTime;
 RWTexture2D<float> gMask;
 
@@ -160,6 +166,46 @@ struct VBufferSC
 
         if (is_valid(gDepth))
             gDepth[pixel] = linZ;
+    }
+
+    void writeFirstHit(
+        uint2 pixel,
+        float3 rayOrigin,
+        float3 rayDir,
+        float3 throughPut,
+        float3 emissive,
+        const HitInfo hit,
+        const float linZ,
+        float3 color,
+        float3 position
+    ){
+        gThp_first[pixel] = float4(throughPut, 1.f);
+        gViewW_first[pixel] = float4(-rayDir, 1.f);
+        gAlbedo_first[pixel] = float4(color, 1.f);
+        gPosition_first[pixel] = float4(position, 1.f);
+
+        VertexData v;
+        float depth = 1.f;
+        float3 prevPosW = float3(0.f);
+        float2 motionVector = float2(0.f);
+
+        if (hit.getType() == HitType::Triangle)
+        {
+            const TriangleHit triangleHit = hit.getTriangleHit();
+            v = gScene.getVertexData(triangleHit);
+            prevPosW = gScene.getPrevPosW(triangleHit);
+
+            // normal
+            uint materialID = gScene.getMaterialID(triangleHit.instanceID);
+            let lod = ExplicitLodTextureSampler(0.f);
+            ShadingData sd = gScene.materials.prepareShadingData(v, materialID, -rayDir, lod);
+            float3 geometry_normal = sd.faceN;
+            adjustShadingNormal(sd, sd.frame);
+            float3 shading_normal = sd.frame.N;
+            float normal_adjust_factor = dot(geometry_normal, shading_normal);
+
+            gNormale_first[pixel] = float4(shading_normal, 1.f);
+        }
     }
 
     void writeShit(uint2 pixel, uint3 color) { gVBuffer[pixel] = uint4(color, 255); }

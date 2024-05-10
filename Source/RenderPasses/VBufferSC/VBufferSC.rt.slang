@@ -191,16 +191,29 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     // if diffuse, if so, write hit and terminate
     BSDFProperties bsdfProperties = mi.getProperties(sd);
     bool isDiffuse = bsdfProperties.roughness > gSpecularRougnessCutoff;
+
+    float3 normal = sd.frame.N;
+    if (dot(normal, sd.V) < 0)
+        normal = -normal;
+    albedo = mi.eval(sd, normal, rayData.sg);
+    float3 hit_pos = sd.posW;
+    if(rayData.pathLength==0)
+        gVBufferSC.writeFirstHit(
+            launchIndex,
+            WorldRayOrigin(),
+            WorldRayDirection(),
+            throughPut,
+            mi.getProperties(sd).emission,
+            hit,
+            rayData.distance,
+            albedo,
+            hit_pos
+        );
+
     // if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)) &&
     // (!rayData.terminated || isDiffuse))
     if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)))
     {
-        float3 normal = sd.frame.N;
-        if (dot(normal, sd.V) < 0)
-            normal = -normal;
-
-        albedo = mi.eval(sd, normal, rayData.sg);
-        float3 hit_pos = sd.posW;
         gVBufferSC.writeHit(
             launchIndex,
             WorldRayOrigin(),
