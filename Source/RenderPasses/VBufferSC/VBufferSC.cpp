@@ -88,7 +88,9 @@ const ChannelList kVBufferExtraChannels = {
     { "throughput_first",     "gThp_first",             "Throughput for transparent materials", true /* optional */, ResourceFormat::RGBA32Float    },
     { "normale_first",        "gNormale_first",         "The G-normal of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
     { "albedo_first",        "gAlbedo_first",           "The Albedo of the intersected triangle",true /* optional */, ResourceFormat::RGBA32Float    },
-    { "position_first",        "gPosition_first",           "The Position of the hitpoint in the world",true /* optional */, ResourceFormat::RGBA32Float    }
+    { "position_first",        "gPosition_first",           "The Position of the hitpoint in the world",true /* optional */, ResourceFormat::RGBA32Float    },
+    { "uv",           "gUV",            "UV map",                         true /* optional */, ResourceFormat::RG32Float    },
+    { "meshid",           "gMeshID",            "Mesh ID",                         true /* optional */, ResourceFormat::R32Uint    },
     // clang-format on
 };
 }; // namespace

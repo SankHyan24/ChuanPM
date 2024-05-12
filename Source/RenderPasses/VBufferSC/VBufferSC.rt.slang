@@ -198,7 +198,8 @@ void handleHit(const HitInfo hit, inout RayData rayData)
     albedo = mi.eval(sd, normal, rayData.sg);
     float3 hit_pos = sd.posW;
     if(rayData.pathLength==0)
-        gVBufferSC.writeFirstHit(
+        {
+            gVBufferSC.writeFirstHit(
             launchIndex,
             WorldRayOrigin(),
             WorldRayDirection(),
@@ -208,12 +209,13 @@ void handleHit(const HitInfo hit, inout RayData rayData)
             rayData.distance,
             albedo,
             hit_pos
-        );
+        );}
 
     // if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)) &&
     // (!rayData.terminated || isDiffuse))
     if ((bsdfSample.isLobe(LobeType::DiffuseReflection) || (bsdfSample.isLobe(LobeType::Reflection) && isDiffuse)))
     {
+        gUV[launchIndex] = sd.uv;
         gVBufferSC.writeHit(
             launchIndex,
             WorldRayOrigin(),

@@ -48,6 +48,9 @@ RWTexture2D<float4> gNormale_first;  //
 RWTexture2D<float4> gAlbedo_first;   //
 RWTexture2D<float4> gPosition_first; //
 
+RWTexture2D<float2> gUV;
+RWTexture2D<uint> gMeshID;
+
 RWTexture2D<uint> gTime;
 RWTexture2D<float> gMask;
 
@@ -109,6 +112,7 @@ struct VBufferSC
             const TriangleHit triangleHit = hit.getTriangleHit();
             v = gScene.getVertexData(triangleHit);
             prevPosW = gScene.getPrevPosW(triangleHit);
+            gMeshID[pixel] = triangleHit.instanceID.index+1;
 
             // normal
             uint materialID = gScene.getMaterialID(triangleHit.instanceID);
@@ -214,6 +218,8 @@ struct VBufferSC
     {
         gVBuffer[pixel] = {};
         gViewW[pixel] = {};
+        gUV[pixel] = (-1.f, -1.f);
+        gMeshID[pixel] = 0;
 
         if (is_valid(gDepth))
             gDepth[pixel] = 0.0f;
