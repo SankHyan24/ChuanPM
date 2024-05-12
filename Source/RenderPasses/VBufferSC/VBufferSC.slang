@@ -218,8 +218,8 @@ struct VBufferSC
     {
         gVBuffer[pixel] = {};
         gViewW[pixel] = {};
-        gUV[pixel] = (-1.f, -1.f);
-        gMeshID[pixel] = 0;
+        // gUV[pixel] = (-1.f, -1.f);
+        // gMeshID[pixel] = 0;
 
         if (is_valid(gDepth))
             gDepth[pixel] = 0.0f;
